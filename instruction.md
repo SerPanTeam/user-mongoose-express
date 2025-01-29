@@ -17,3 +17,6 @@ npx eslint --init
   "endOfLine": "auto"      // Автоопределение конца строки (CRLF/LF)
 }
 
+https://chatgpt.com/c/679a2877-b460-8005-bbef-461880ac4b54
+
+

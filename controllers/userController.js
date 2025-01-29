@@ -70,3 +70,82 @@ export const loginUser = async (req, res, next) => {
     next(error);
   }
 };
+
+
+// -----------------------------------------------------------
+export const getUser = async (req, res, next) => {
+  try {
+    const { id } = req.params; // /api/users/:id
+    const user = await User.findById(id).select("-password");
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    res.json(user);
+  } catch (error) {
+    next(error);
+  }
+};
+
+import bcrypt from "bcrypt";
+
+export const updateUser = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    // Находим пользователя
+    let user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Проверим, имеет ли право данный userId обновлять (например, только сам себя).
+    // Если нужна «роль админа», делайте отдельные проверки. Пример:
+    // if (req.userId !== id) {
+    //   return res.status(403).json({ error: "Forbidden" });
+    // }
+
+    const { name, email, password } = req.body;
+
+    // Если приходит новое имя/почта, меняем:
+    if (name) user.name = name;
+    if (email) user.email = email;
+
+    // Если приходит новый пароль, хешируем:
+    if (password) {
+      const salt = await bcrypt.genSalt(10);
+      user.password = await bcrypt.hash(password, salt);
+    }
+
+    // Сохраняем обновленного пользователя
+    const updatedUser = await user.save();
+    const { password: _, ...userWithoutPassword } = updatedUser.toObject();
+
+    res.json({
+      message: "User updated successfully",
+      user: userWithoutPassword,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteUser = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    // Точно так же можем проверить, кто удаляет: admin или сам пользователь
+    // if (req.userId !== id) {
+    //   return res.status(403).json({ error: "Forbidden" });
+    // }
+
+    const user = await User.findByIdAndDelete(id);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.json({ message: "User deleted successfully" });
+  } catch (error) {
+    next(error);
+  }
+};
+
